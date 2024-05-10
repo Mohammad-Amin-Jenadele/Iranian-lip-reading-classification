@@ -11,8 +11,9 @@ import imageio
 from io import BytesIO
 import base64
 from IPython.display import HTML
-
-
+import os
+import cv2
+from typing import List, Tuple, Optional
 
 
 def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -111,7 +112,7 @@ def show_MP4(files: list[str], labels: list[int], num_to_class_dict: dict[int : 
 
     # Create final HTML to display all GIFs and labels with infinite loop script
     final_html = f'<div style="display:flex; flex-wrap:wrap;">{html_content}</div>'
-    final_html += '<script>function refreshGIFs() { document.querySelectorAll("img").forEach(img => img.src=img.src); } setInterval(refreshGIFs, 3000);</script>'
+    final_html += '<script>function refreshGIFs() { document.querySelectorAll("img").forEach(img => img.src=img.src); } setInterval(refreshGIFs, 4000);</script>'
 
     # Display the HTML in Colab
     from IPython.display import HTML
@@ -135,7 +136,61 @@ def get_mp4_files_and_labels(directory: str) -> tuple[list[str], list[int]]:
     for file in os.listdir(directory):
         if file.endswith('.mp4'):
             files.append(directory + file)
-            label = int(file[4]) - 1
+            label = int(file.split('-')[1][1]) - 1
             labels.append( label)
     return  files , labels
 
+
+def MP4_to_list(files: List[str], target_shape: tuple) -> List[np.array]:
+    """
+    Converts a list of MP4 file paths into a list of NumPy arrays representing the video frames.
+    Resizes each frame to the target shape before appending.
+
+    Parameters:
+    - files (List[str]): A list of strings representing file paths to MP4 files.
+    - target_shape (tuple): Target shape for resizing frames, e.g., (height, width).
+
+    Returns:
+    - List[np.array]: A list containing NumPy arrays representing the video frames.
+    """
+    video_list = []
+    for file in files:
+        frames = []
+        cap = cv2.VideoCapture(file)
+        ret = True
+        while ret:
+            ret, img = cap.read()
+            if ret:
+                # Convert pixel values to float32 and normalize
+                img = img.astype(np.float32) / 255.0  
+                # Convert BGR to RGB
+                img_rgb = cv2.cvtColor(img, cv2.COLOR_BGR2RGB)
+                resized_img = cv2.resize(img_rgb, target_shape)
+                frames.append(resized_img)
+        video_list.append(np.stack(frames, axis=0))
+    return video_list
+
+
+def pad_videos(train_MP4_arrayed: list, max_frames: int, custom_value: int) -> np.ndarray:
+    """
+    Pads the input list of videos with frames containing a custom value to ensure all videos have the same number of frames.
+
+    Parameters:
+        train_MP4_arrayed (list): List of numpy arrays representing videos. Each array shape should be (num_frames, height, width, 3).
+        max_frames (int): The maximum number of frames desired for all videos after padding.
+        custom_value (int): The value to use for padding frames.
+
+    Returns:
+        numpy.ndarray: Array of padded videos with shape (num_videos, max_frames, height, width, 3).
+    """
+    padded_videos = []
+    for video in train_MP4_arrayed:
+        num_frames = video.shape[0]
+        if num_frames < max_frames:
+            num_frames_to_pad = max_frames - num_frames
+            padded_frames = np.full((num_frames_to_pad, *video.shape[1:]), custom_value, dtype=np.uint8)
+            padded_video = np.concatenate((video, padded_frames), axis=0)
+            padded_videos.append(padded_video)
+        else:
+            padded_videos.append(video)
+    return np.array(padded_videos)
