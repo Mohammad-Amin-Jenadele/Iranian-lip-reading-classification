@@ -1,6 +1,5 @@
 # Package import
 import tensorflow as tf
-from tensorflow.keras.datasets import cifar10
 from tensorflow.keras.utils import to_categorical
 from sklearn.metrics import ConfusionMatrixDisplay
 from sklearn.metrics import confusion_matrix
@@ -119,7 +118,7 @@ def show_MP4(files: list[str], labels: list[int], num_to_class_dict: dict[int : 
     return HTML(final_html)
 
 
-def get_mp4_files_and_labels(directory: str) -> tuple[list[str], list[int]]:
+def get_mp4_files_and_labels(directory: str) -> tuple[list[str], np.ndarray]:
     """
     Retrieve a list of MP4 files and their corresponding labels from a specified directory.
 
@@ -129,16 +128,16 @@ def get_mp4_files_and_labels(directory: str) -> tuple[list[str], list[int]]:
     Returns:
     - Tuple[List[str], List[int]]: A tuple containing two lists:
         - files (List[str]): A list of strings representing file paths to MP4 files.
-        - labels (List[int]): A list of integers representing labels for the MP4 files.
+        - labels (np.ndarray): A np.array representing labels for the MP4 files.
     """
     files = []
     labels = []
     for file in os.listdir(directory):
         if file.endswith('.mp4'):
-            files.append(directory + file)
+            files.append(directory + '/'+ file)
             label = int(file.split('-')[1][1]) - 1
             labels.append( label)
-    return  files , labels
+    return  files , np.array(labels)
 
 
 def MP4_to_list(files: List[str], target_shape: tuple) -> List[np.array]:
@@ -194,3 +193,20 @@ def pad_videos(train_MP4_arrayed: list, max_frames: int, custom_value: int) -> n
         else:
             padded_videos.append(video)
     return np.array(padded_videos)
+
+def onehot_encode_labels(y: np.ndarray, num_classes: int) -> np.ndarray:
+    """
+    One-hot encodes an array of labels using TensorFlow's Keras utilities.
+
+    Parameters:
+    - y (np.ndarray): Input array of labels.
+    - num_classes (int): Number of classes for one-hot encoding.
+
+    Returns:
+    - np.ndarray: One-hot encoded array of labels.
+    """
+    # Ensure y is integer type
+    y = y.astype(np.int32)
+    # Perform one-hot encoding
+    encoded_labels = to_categorical(y, num_classes=num_classes)
+    return encoded_labels
