@@ -12,7 +12,7 @@ import base64
 from IPython.display import HTML
 import os
 import cv2
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional , Generator
 
 
 def precision(y_true: np.ndarray, y_pred: np.ndarray) -> float:
@@ -236,3 +236,22 @@ def make_dataset(x : np.ndarray , y : np.ndarray , num_classes: int , shuffle : 
       y = y[indices]
       
     return (x , y)
+
+def data_generator(x: np.ndarray, y: np.ndarray, batch_size: int) -> Generator[Tuple[np.ndarray, np.ndarray], None, None]:
+    """
+    Generate batches of data for training a machine learning model.
+
+    Parameters:
+        x_train (np.ndarray): Input data array containing features.
+        y_train (np.ndarray): Target data array containing labels.
+        batch_size (int): Size of each batch to yield.
+
+    Yields:
+        tuple: A tuple containing a batch of input features and their corresponding target labels.
+    """
+    num_samples = len(x)
+    while True:
+        for i in range(0, num_samples, batch_size):
+            x_batch = x[i:i+batch_size]
+            y_batch = y[i:i+batch_size]
+            yield x_batch, y_batch
