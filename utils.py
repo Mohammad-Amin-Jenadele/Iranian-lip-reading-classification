@@ -210,3 +210,29 @@ def onehot_encode_labels(y: np.ndarray, num_classes: int) -> np.ndarray:
     # Perform one-hot encoding
     encoded_labels = to_categorical(y, num_classes=num_classes)
     return encoded_labels
+
+def make_dataset(x : np.ndarray , y : np.ndarray , num_classes: int , shuffle : bool) -> tuple[np.ndarray, np.ndarray]:
+    """
+    returns x , y as tuple dataset.
+
+    Parameters:
+    - x (np.ndarray): Input array .
+    - y (np.ndarray): Label array
+    - num_classes (int): Number of classes for one-hot encoding.
+    - shuffle (bool): whether to shuffle or not
+
+    Returns:
+    - input and one_hotted labels(x , y)
+      - np.ndarray: Input array
+      - np.ndarray: One-hot encoded array of labels.
+    """
+    y = onehot_encode_labels(y ,num_classes)
+    if shuffle:
+      indices = np.arange(len(x))
+      np.random.shuffle(indices)
+
+      # Shuffle x and y arrays
+      x = x[indices]
+      y = y[indices]
+      
+    return (x , y)
