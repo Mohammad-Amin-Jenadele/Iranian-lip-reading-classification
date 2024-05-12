@@ -184,7 +184,7 @@ def create_vivit_classifier(
         # Layer normalization and MHSA
         x1 = layers.LayerNormalization(epsilon=1e-6)(encoded_patches)
         attention_output = layers.MultiHeadAttention(
-            num_heads=num_heads, key_dim=embed_dim // num_heads, dropout=0.1
+            num_heads=num_heads, key_dim=embed_dim // num_heads, dropout=0.3
         )(x1, x1)
 
         # Skip connection
